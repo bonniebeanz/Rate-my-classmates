@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rate My Classmate</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text: #1a1a1a;
+    --text-muted: #777;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-logo { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  .nav-logo span { color: var(--accent); }
+  .nav-actions { display: flex; gap: 8px; }
+  .btn { padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
+  .btn-ghost:hover { background: var(--bg); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.88; }
+
+  /* HERO */
+  .hero {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem 2rem;
+    text-align: center;
+  }
+  .hero h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .hero p { font-size: 15px; color: var(--text-muted); margin-bottom: 1.5rem; }
+  .search-wrap { max-width: 500px; margin: 0 auto; position: relative; }
+  .search-wrap input {
+    width: 100%;
+    padding: 12px 48px 12px 16px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    background: var(--bg);
+    transition: border-color 0.15s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); background: white; }
+  .search-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; }
+  .search-path-toggle { display: flex; align-items: center; background: rgba(255,255,255,0.8); border: 1.5px solid var(--border-strong); border-radius: 12px; overflow: hidden; max-width: 500px; margin: 0 auto; }
+  .path-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--text-muted); transition: all 0.15s; }
+  .path-btn.active { background: var(--accent); color: white; }
+  .path-btn:hover:not(.active) { background: var(--accent-light); color: var(--accent); }
+  .path-icon { font-size: 16px; }
+  .path-divider { width: 1px; height: 40px; background: var(--border-strong); flex-shrink: 0; }
+  .stats-row { display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 12px; color: var(--text-muted); }
+
+  /* MAIN LAYOUT */
+  .container { max-width: 960px; margin: 0 auto; padding: 2rem 1rem; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; background: var(--surface); padding: 4px; border-radius: 10px; border: 1px solid var(--border); width: fit-content; }
+  .tab { padding: 7px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--text-muted); transition: all 0.15s; }
+  .tab.active { background: var(--accent); color: white; }
+
+  /* PROFILE CARDS */
+  .profiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .profile-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .profile-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(37,99,235,0.1); }
+  .card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+  .card-name { font-size: 15px; font-weight: 600; }
+  .card-uni { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .card-courses { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+  .course-tag { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+  .card-rating-row { display: flex; align-items: center; justify-content: space-between; }
+  .big-score { font-size: 24px; font-weight: 700; }
+  .big-score.high { color: var(--green); }
+  .big-score.mid { color: var(--amber); }
+  .big-score.low { color: var(--red); }
+  .stars-sm { color: #f59e0b; font-size: 13px; }
+  .review-count { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* CATEGORY BARS */
+  .cat-bars { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+  .cat-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  .cat-label { width: 90px; color: var(--text-muted); flex-shrink: 0; }
+  .bar-bg { flex: 1; height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s; }
+  .cat-val { width: 24px; text-align: right; font-weight: 500; color: var(--text); font-size: 11px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; padding: 1rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 100%; max-width: 560px;
+    max-height: 90vh; overflow-y: auto;
+    transform: translateY(12px); transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-header h2 { font-size: 16px; font-weight: 600; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 0 4px; }
+  .modal-body { padding: 1.5rem; }
+
+  /* FORMS */
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 5px; }
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px; font-size: 14px;
+    background: var(--bg); color: var(--text);
+    outline: none; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); background: white; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* STAR RATING INPUT */
+  .star-input { display: flex; align-items: center; gap: 6px; }
+  .star-input .star { font-size: 22px; color: #d1d5db; cursor: pointer; transition: color 0.1s, transform 0.1s; }
+  .star-input .star:hover { transform: scale(1.15); }
+  .star-val-label { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
+
+  /* CATEGORY RATINGS */
+  .cat-rating-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; }
+  .cat-rating-row { display: flex; align-items: center; justify-content: space-between; }
+  .cat-rating-label { font-size: 13px; font-weight: 500; width: 130px; }
+
+  /* PROFILE DETAIL VIEW */
+  .profile-detail { display: none; }
+  .profile-detail.active { display: block; }
+  .back-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--accent); cursor: pointer; border: none; background: none; padding: 0; margin-bottom: 1.5rem; font-weight: 500; }
+  .detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
+  .detail-top { display: flex; align-items: center; gap: 16px; margin-bottom: 1.5rem; }
+  .avatar-lg { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; flex-shrink: 0; }
+  .detail-name { font-size: 22px; font-weight: 700; }
+  .detail-uni { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+  .overall-score { font-size: 48px; font-weight: 800; line-height: 1; }
+  .score-wrap { text-align: center; }
+  .score-out { font-size: 13px; color: var(--text-muted); }
+  .detail-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1rem; }
+  .detail-cat { background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+  .detail-cat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .detail-cat-score { font-size: 18px; font-weight: 700; }
+
+  /* REVIEWS */
+  .review-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 10px; }
+  .review-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .review-stars { color: #f59e0b; font-size: 14px; }
+  .review-time { font-size: 12px; color: var(--text-muted); }
+  .review-text { font-size: 14px; line-height: 1.6; color: var(--text); }
+  .review-course { display: inline-block; background: var(--accent-light); color: var(--accent); font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-bottom: 6px; }
+
+  .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+  .empty-state .icon { font-size: 36px; margin-bottom: 8px; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--green); color: white;
+    padding: 10px 18px; border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    opacity: 0; transform: translateY(8px);
+    transition: all 0.2s; pointer-events: none; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .section-title { font-size: 16px; font-weight: 600; margin-bottom: 1rem; }
+
+  @media (max-width: 600px) {
+    .form-grid-2 { grid-template-columns: 1fr; }
+    .detail-cats { grid-template-columns: 1fr; }
+    .stats-row { gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Rate My <span>Classmate</span></div>
+  <div class="nav-actions">
+    <button class="btn btn-ghost" onclick="openModal('addProfile')">+ Add Classmate</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Rate My Classmate</h1>
+  <p>Find and rate your classmates based on their group work contributions</p>
+  <div style="max-width:500px;margin:0 auto;">
+    <div style="display:flex;align-items:center;border:1.5px solid rgba(0,0,0,0.15);border-radius:12px;overflow:hidden;margin-bottom:12px;background:rgba(255,255,255,0.8);">
+      <button id="toggle-name" onclick="setSearchMode('name')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:#2563eb;color:white;transition:all 0.15s;">
+        <span>👤</span><span>Search by Name</span>
+      </button>
+      <div style="width:1px;height:40px;background:rgba(0,0,0,0.15);flex-shrink:0;"></div>
+      <button id="toggle-school" onclick="setSearchMode('school')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#777;transition:all 0.15s;">
+        <span>🎓</span><span>Search by School</span>
+      </button>
+    </div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Search by classmate name..." />
+      <span class="search-icon">🔍</span>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-num" id="statSchools">0</div><div class="stat-label">Schools</div></div>
+    <div class="stat"><div class="stat-num" id="statProfiles">0</div><div class="stat-label">Classmates</div></div>
+    <div class="stat"><div class="stat-num" id="statReviews">0</div><div class="stat-label">Reviews</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- LIST VIEW -->
+  <div id="listView">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div class="tabs">
+        <button class="tab active" onclick="setSort('recent',this)">Most Recent</button>
+        <button class="tab" onclick="setSort('highest',this)">Highest Rated</button>
+        <button class="tab" onclick="setSort('lowest',this)">Lowest Rated</button>
+      </div>
+    </div>
+    <div class="profiles-grid" id="profilesGrid">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="icon">👥</div>
+        <p>No classmates yet — be the first to add one!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div id="detailView" class="profile-detail">
+    <button class="back-btn" onclick="showList()">← Back to all classmates</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- ADD PROFILE MODAL -->
+<div class="modal-overlay" id="modal-addProfile">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add a Classmate</h2>
+      <button class="modal-close" onclick="closeModal('addProfile')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="p-name" placeholder="e.g. John Smith" />
+        </div>
+        <div class="form-group">
+          <label>University *</label>
+          <input type="text" id="p-uni" placeholder="e.g. LSE" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Major / Programme</label>
+        <input type="text" id="p-major" placeholder="e.g. Economics, Computer Science" />
+      </div>
+      <div class="form-group">
+        <label>Course Codes (comma separated)</label>
+        <input type="text" id="p-courses" placeholder="e.g. EC1A1, MA100, ST107" />
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="addProfile()">Add Classmate</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD REVIEW MODAL -->
+<div class="modal-overlay" id="modal-addReview">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Leave a Review</h2>
+      <button class="modal-close" onclick="closeModal('addReview')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="r-profileId" />
+      <div class="form-group">
+        <label>Course Code</label>
+        <input type="text" id="r-course" placeholder="e.g. EC1A1" />
+      </div>
+      <div class="form-group">
+        <label>Category Ratings *</label>
+        <div class="cat-rating-grid" id="catRatingGrid"></div>
+      </div>
+      <div class="form-group">
+        <label>Written Review</label>
+        <textarea id="r-text" placeholder="Share your experience working with this classmate..."></textarea>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="submitReview()">Submit Review</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  const firebaseConfig = {
+    apiKey: "AIzaSyDZLJHcsymh6La4KdNmQwIHqrb7bZNiD0w",
+    authDomain: "rate-my-classmates.firebaseapp.com",
+    databaseURL: "https://rate-my-classmates-default-rtdb.firebaseio.com",
+    projectId: "rate-my-classmates",
+    storageBucket: "rate-my-classmates.firebasestorage.app",
+    messagingSenderId: "73395128596",
+    appId: "1:73395128596:web:63edc5fcb66adc0f249a01",
+    measurementId: "G-7810JYKBL1"
+  };
+
+  const CATEGORIES = ['Helpfulness', 'Reliability', 'Communication', 'Work Quality', 'Team Spirit'];
+
+  const AVATAR_COLORS = [
+    ['#dbeafe','#1d4ed8'], ['#dcfce7','#15803d'], ['#fef3c7','#92400e'],
+    ['#fce7f3','#9d174d'], ['#ede9fe','#5b21b6'], ['#ffedd5','#9a3412']
+  ];
+
+  let profiles = {};
+  let reviews = {};
+  let currentSort = 'recent';
+  let db = null;
+
+  function getAvatarColor(name) {
+    let hash = 0;
+    for (let c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash);
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  }
+
+  function getInitials(name) {
+    return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  }
+
+  function avgScore(profileId) {
+    const rs = Object.values(reviews).filter(r => r.profileId === profileId);
+    if (!rs.length) return null;
+    const catAvgs = CATEGORIES.map(cat => {
+      const vals = rs.map(r => parseFloat(r.cats[cat]) || 0).filter(v => v > 0);
+      return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : 0;
+    }).filter(v => v > 0);
+    return catAvgs.length ? catAvgs.reduce((a,b) => a+b, 0) / catAvgs.length : null;
+  }
+
+  function catAvg(profileId, cat) {
+    const rs = Object.values(reviews).filter(r => r.profileId === profileId);
+    const vals = rs.map(r => parseFloat(r.cats[cat]) || 0).filter(v => v > 0);
+    return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : 0;
+  }
+
+  function scoreClass(s) {
+    if (s >= 4) return 'high';
+    if (s >= 2.5) return 'mid';
+    return 'low';
+  }
+
+  function starsHtml(score, size = 14) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      html += `<span style="color:${i <= Math.round(score) ? '#f59e0b' : '#d1d5db'};font-size:${size}px">★</span>`;
+    }
+    return html;
+  }
+
+  let searchMode = 'name';
+
+  window.setSearchMode = function(mode) {
+    searchMode = mode;
+    const btnName = document.getElementById('toggle-name');
+    const btnSchool = document.getElementById('toggle-school');
+    btnName.style.background = mode === 'name' ? '#2563eb' : 'transparent';
+    btnName.style.color = mode === 'name' ? 'white' : '#777';
+    btnSchool.style.background = mode === 'school' ? '#2563eb' : 'transparent';
+    btnSchool.style.color = mode === 'school' ? 'white' : '#777';
+    const input = document.getElementById('searchInput');
+    input.placeholder = mode === 'name' ? 'Search by classmate name...' : 'Search by school or major...';
+    input.value = '';
+    renderProfiles();
+  };
+
+  window.filterProfiles = function() {
+    renderProfiles();
+  };
+
+  window.setSort = function(sort, el) {
+    currentSort = sort;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderProfiles();
+  };
+
+  function getSortedProfiles() {
+    let list = Object.entries(profiles).map(([id, p]) => ({ id, ...p, score: avgScore(id) }));
+    const searchEl = document.getElementById('searchInput');
+    const q = searchEl ? searchEl.value.toLowerCase().trim() : '';
+    if (q) {
+      if (searchMode === 'school') {
+        list = list.filter(p =>
+          (p.university || '').toLowerCase().includes(q) ||
+          (p.major || '').toLowerCase().includes(q)
+        );
+      } else {
+        list = list.filter(p => (p.name || '').toLowerCase().includes(q));
+      }
+    }
+    if (currentSort === 'highest') list.sort((a,b) => (b.score||0) - (a.score||0));
+    else if (currentSort === 'lowest') list.sort((a,b) => (a.score||99) - (b.score||99));
+    else list.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+    return list;
+  }
+
+  function renderProfiles() {
+    const grid = document.getElementById('profilesGrid');
+    const list = getSortedProfiles();
+    const totalReviews = Object.values(reviews).length;
+    const uniqueSchools = new Set(Object.values(profiles).map(p => (p.university || '').trim().toLowerCase()).filter(Boolean)).size;
+
+    document.getElementById('statSchools').textContent = uniqueSchools;
+    document.getElementById('statProfiles').textContent = Object.keys(profiles).length;
+    document.getElementById('statReviews').textContent = totalReviews;
+
+    if (!list.length) {
+      const q = document.getElementById('searchInput')?.value.trim();
+      const msg = q
+        ? `No results found for "<strong>${q}</strong>" — try a different name, university or course code, or <a href="#" onclick="openModal('addProfile');return false;" style="color:var(--accent)">add this classmate</a>!`
+        : `No classmates yet — be the first to <a href="#" onclick="openModal('addProfile');return false;" style="color:var(--accent)">add one</a>!`;
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><p>${msg}</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map(p => {
+      const [bg, fg] = getAvatarColor(p.name);
+      const score = p.score;
+      const reviewCount = Object.values(reviews).filter(r => r.profileId === p.id).length;
+      const courses = (p.courses || '').split(',').map(c => c.trim()).filter(Boolean);
+      const scoreHtml = score !== null
+        ? `<span class="big-score ${scoreClass(score)}">${score.toFixed(1)}</span>`
+        : `<span class="big-score" style="color:var(--text-muted);font-size:16px">No ratings</span>`;
+
+      const catBars = CATEGORIES.map(cat => {
+        const val = catAvg(p.id, cat);
+        return `<div class="cat-row">
+          <span class="cat-label">${cat}</span>
+          <div class="bar-bg"><div class="bar-fill" style="width:${val/5*100}%"></div></div>
+          <span class="cat-val">${val ? val.toFixed(1) : '—'}</span>
+        </div>`;
+      }).join('');
+
+      return `<div class="profile-card" onclick="showDetail('${p.id}')">
+        <div class="card-top">
+          <div class="avatar" style="background:${bg};color:${fg}">${getInitials(p.name)}</div>
+          <div>
+            <div class="card-name">${escHtml(p.name)}</div>
+            <div class="card-uni">${escHtml(p.university || '')}${p.major ? ' · ' + escHtml(p.major) : ''}</div>
+          </div>
+        </div>
+        ${courses.length ? `<div class="card-courses">${courses.slice(0,4).map(c => `<span class="course-tag">${escHtml(c)}</span>`).join('')}</div>` : ''}
+        <div class="card-rating-row">
+          <div>${scoreHtml}<div class="review-count">${reviewCount} review${reviewCount !== 1 ? 's' : ''}</div></div>
+          <div style="text-align:right">
+            ${score !== null ? `<div>${starsHtml(score, 13)}</div>` : ''}
+          </div>
+        </div>
+        <div class="cat-bars">${catBars}</div>
+      </div>`;
+    }).join('');
+  }
+
+  window.showDetail = function(id) {
+    const p = profiles[id];
+    if (!p) return;
+    const [bg, fg] = getAvatarColor(p.name);
+    const score = avgScore(id);
+    const profileReviews = Object.values(reviews).filter(r => r.profileId === id).sort((a,b) => b.timestamp - a.timestamp);
+    const courses = (p.courses || '').split(',').map(c => c.trim()).filter(Boolean);
+
+    const catDetail = CATEGORIES.map(cat => {
+      const val = catAvg(id, cat);
+      return `<div class="detail-cat">
+        <div class="detail-cat-label">${cat}</div>
+        <div class="detail-cat-score ${val ? scoreClass(val) : ''}">${val ? val.toFixed(1) : '—'}</div>
+      </div>`;
+    }).join('');
+
+    const reviewsHtml = profileReviews.length ? profileReviews.map(r => {
+      const rScore = Object.values(r.cats || {}).filter(v => v > 0);
+      const rAvg = rScore.length ? rScore.reduce((a,b) => a+b,0) / rScore.length : 0;
+      return `<div class="review-card">
+        <div class="review-top">
+          <div class="review-stars">${starsHtml(rAvg, 14)}</div>
+          <span class="review-time">${r.time || ''}</span>
+        </div>
+        ${r.course ? `<span class="review-course">${escHtml(r.course)}</span>` : ''}
+        ${r.text ? `<div class="review-text">${escHtml(r.text)}</div>` : ''}
+      </div>`;
+    }).join('') : `<div class="empty-state"><div class="icon">💬</div><p>No reviews yet</p></div>`;
+
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-card">
+        <div class="detail-top">
+          <div class="avatar-lg" style="background:${bg};color:${fg}">${getInitials(p.name)}</div>
+          <div style="flex:1">
+            <div class="detail-name">${escHtml(p.name)}</div>
+            <div class="detail-uni">${escHtml(p.university || '')}${p.major ? ' · ' + escHtml(p.major) : ''}</div>
+            ${courses.length ? `<div class="card-courses" style="margin-top:6px">${courses.map(c => `<span class="course-tag">${escHtml(c)}</span>`).join('')}</div>` : ''}
+          </div>
+          <div class="score-wrap">
+            <div class="overall-score ${score ? scoreClass(score) : ''}">${score ? score.toFixed(1) : '—'}</div>
+            <div class="score-out">out of 5</div>
+            ${score ? `<div style="margin-top:4px">${starsHtml(score, 14)}</div>` : ''}
+          </div>
+        </div>
+        <div class="detail-cats">${catDetail}</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="section-title" style="margin:0">Reviews (${profileReviews.length})</div>
+        <button class="btn btn-primary" onclick="openReview('${id}')">+ Write a Review</button>
+      </div>
+      ${reviewsHtml}
+    `;
+
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('detailView').classList.add('active');
+    window.scrollTo(0, 0);
+  };
+
+  window.showList = function() {
+    document.getElementById('listView').style.display = 'block';
+    document.getElementById('detailView').classList.remove('active');
+  };
+
+  window.openModal = function(name) {
+    document.getElementById('modal-' + name).classList.add('open');
+  };
+
+  window.closeModal = function(name) {
+    document.getElementById('modal-' + name).classList.remove('open');
+  };
+
+  window.openReview = function(profileId) {
+    document.getElementById('r-profileId').value = profileId;
+    document.getElementById('r-course').value = '';
+    document.getElementById('r-text').value = '';
+    buildCatRatings();
+    openModal('addReview');
+  };
+
+  function buildCatRatings() {
+    const grid = document.getElementById('catRatingGrid');
+    grid.innerHTML = CATEGORIES.map(cat => `
+      <div class="cat-rating-row">
+        <span class="cat-rating-label">${cat}</span>
+        <div class="star-input" id="stars-${cat.replace(/\s/g,'_')}">
+          ${[1,2,3,4,5].map(n => `<span class="star" data-val="${n}" data-cat="${cat}" onclick="setCatRating('${cat}',${n})">★</span>`).join('')}
+          <span class="star-val-label" id="lbl-${cat.replace(/\s/g,'_')}">—</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.setCatRating = function(cat, val) {
+    const key = cat.replace(/\s/g,'_');
+    document.querySelectorAll(`#stars-${key} .star`).forEach(s => {
+      s.style.color = parseInt(s.dataset.val) <= val ? '#f59e0b' : '#d1d5db';
+    });
+    document.getElementById(`lbl-${key}`).textContent = val + '/5';
+    document.getElementById(`stars-${key}`).dataset.value = val;
+  };
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('modal-addProfile').classList.contains('open')) {
+        addProfile();
+      } else if (document.getElementById('modal-addReview').classList.contains('open')) {
+        submitReview();
+      }
+    }
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    }
+  });
+
+  window.addProfile = function() {
+    const name = document.getElementById('p-name').value.trim();
+    const uni = document.getElementById('p-uni').value.trim();
+    const major = document.getElementById('p-major').value.trim();
+    const courses = document.getElementById('p-courses').value.trim();
+    if (!name || !uni) { alert('Please fill in name and university'); return; }
+
+    const data = { name, university: uni, major, courses, timestamp: Date.now() };
+
+    if (db) {
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({ ref, push }) => {
+        push(ref(db, 'classmates'), data);
+      });
+    } else {
+      const id = 'local_' + Date.now();
+      profiles[id] = data;
+      renderProfiles();
+    }
+
+    document.getElementById('p-name').value = '';
+    document.getElementById('p-uni').value = '';
+    document.getElementById('p-major').value = '';
+    document.getElementById('p-courses').value = '';
+    closeModal('addProfile');
+    showToast('Classmate added!');
+  };
+
+  window.submitReview = function() {
+    const profileId = document.getElementById('r-profileId').value;
+    const course = document.getElementById('r-course').value.trim();
+    const text = document.getElementById('r-text').value.trim();
+
+    const cats = {};
+    let hasRating = false;
+    for (const cat of CATEGORIES) {
+      const key = cat.replace(/\s/g,'_');
+      const val = parseInt(document.getElementById('stars-' + key)?.dataset.value || 0);
+      cats[cat] = val;
+      if (val > 0) hasRating = true;
+    }
+    if (!hasRating) { alert('Please rate at least one category'); return; }
+
+    const now = new Date();
+    const data = {
+      profileId, course, text, cats,
+      time: now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }),
+      timestamp: Date.now()
+    };
+
+    if (db) {
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({ ref, push }) => {
+        push(ref(db, 'classmateReviews'), data);
+      });
+    } else {
+      reviews['local_r_' + Date.now()] = data;
+      renderProfiles();
+      showDetail(profileId);
+    }
+
+    closeModal('addReview');
+    showToast('Review submitted!');
+  };
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = '✓ ' + msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Close modal on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+  });
+
+  // Firebase init
+  async function initFirebase() {
+    try {
+      const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getDatabase, ref, onValue } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+      const app = initializeApp(firebaseConfig, 'rate-my-classmates-app');
+      db = getDatabase(app);
+
+      onValue(ref(db, 'classmates'), snap => {
+        profiles = snap.val() || {};
+        renderProfiles();
+      });
+      onValue(ref(db, 'classmateReviews'), snap => {
+        reviews = snap.val() || {};
+        renderProfiles();
+        const detail = document.getElementById('detailView');
+        if (detail.classList.contains('active')) {
+          const profileId = document.getElementById('r-profileId').value;
+          if (profileId) showDetail(profileId);
+        }
+      });
+    } catch(e) {
+      console.error('Firebase error:', e);
+      renderProfiles();
+    }
+  }
+
+  buildCatRatings();
+  initFirebase();
+
+  // Wire search input inside module scope
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => renderProfiles());
+  }
+</script>
+</body>
+</html>
